@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
+import '../widgets/form_widgets.dart';
 
 class IngresoFormScreen extends StatefulWidget {
   const IngresoFormScreen({super.key});
@@ -17,7 +17,6 @@ class _IngresoFormScreenState extends State<IngresoFormScreen> {
   final _montoCtrl = TextEditingController();
   String _categoria = 'mesada';
   DateTime _fecha = DateTime.now();
-
   final _categorias = const ['mesada', 'beca', 'trabajo', 'ventas', 'otro'];
 
   @override
@@ -66,67 +65,69 @@ class _IngresoFormScreenState extends State<IngresoFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            TextFormField(
-              controller: _descCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Descripción',
-                hintText: 'Ej. Mesada septiembre',
-                border: OutlineInputBorder(),
-              ),
-              textInputAction: TextInputAction.next,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Escribe una descripción.' : null,
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _categoria,
-              decoration: const InputDecoration(
-                labelText: 'Categoría',
-                border: OutlineInputBorder(),
-              ),
-              items: _categorias
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                  .toList(),
-              onChanged: (v) => setState(() => _categoria = v ?? 'otro'),
-              validator: (v) =>
-                  (v == null || v.isEmpty) ? 'Elige una categoría.' : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
+            MontoHeroField(
               controller: _montoCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Monto',
-                prefixText: '\$ ',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-              ],
               validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Escribe un monto válido.';
+                if (v == null || v.trim().isEmpty) {
+                  return 'Escribe un monto válido.';
+                }
                 final m = double.tryParse(v.replaceAll(',', '.'));
                 if (m == null) return 'Escribe un monto válido.';
                 if (m <= 0) return 'El monto debe ser mayor que cero.';
                 return null;
               },
             ),
-            const SizedBox(height: 12),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                  'Fecha: ${DateFormat('dd/MM/yyyy').format(_fecha)}'),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: _elegirFecha,
+            const SizedBox(height: 14),
+            const Text('Descripción',
+                style: TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            TextFormField(
+              controller: _descCtrl,
+              decoration: const InputDecoration(
+                hintText: 'Ej. Mesada septiembre',
+                prefixIcon: Icon(Icons.edit_outlined),
+              ),
+              textInputAction: TextInputAction.next,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Escribe una descripción.'
+                  : null,
             ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              icon: const Icon(Icons.save),
-              label: const Text('Guardar ingreso'),
-              onPressed: _guardar,
+            const SizedBox(height: 14),
+            const Text('Categoría',
+                style: TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            CategoriaChips(
+              categorias: _categorias,
+              actual: _categoria,
+              onSelect: (c) => setState(() => _categoria = c),
             ),
+            const SizedBox(height: 14),
+            const Text('Fecha',
+                style: TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.calendar_month_rounded),
+                title: Text(DateFormat('dd MMM yyyy', 'es').format(_fecha),
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: _elegirFecha,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+              ),
+            ),
+            const SizedBox(height: 80),
           ],
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: FilledButton.icon(
+            icon: const Icon(Icons.check_rounded),
+            label: const Text('Guardar ingreso'),
+            onPressed: _guardar,
+          ),
         ),
       ),
     );
