@@ -177,21 +177,7 @@ class DashboardScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: QuickActionCard(
-                        titulo: 'Dictar por voz',
-                        subtitulo: 'Voz PLUS',
-                        icono: Icons.mic_rounded,
-                        gradiente: AppGradients.vozCard,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) =>
-                                  const EgresoFormScreen()),
-                        ),
-                      ),
-                    ),
+
                   ],
                 ),
                 const SizedBox(height: 18),

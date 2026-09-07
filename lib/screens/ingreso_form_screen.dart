@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:speech_to_text/speech_to_text.dart';
+import '../services/voice_parser.dart';
 import '../state/app_state.dart';
 import '../widgets/form_widgets.dart';
 
@@ -18,12 +20,49 @@ class _IngresoFormScreenState extends State<IngresoFormScreen> {
   String _categoria = 'mesada';
   DateTime _fecha = DateTime.now();
   final _categorias = const ['mesada', 'beca', 'trabajo', 'ventas', 'otro'];
+  final SpeechToText _speech = SpeechToText();
+  bool _escuchando = false;
 
   @override
   void dispose() {
     _descCtrl.dispose();
     _montoCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _escuchar() async {
+    final disponible = await _speech.initialize();
+    if (!disponible) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Micrófono no disponible.')));
+      return;
+    }
+    setState(() => _escuchando = true);
+    await _speech.listen(
+      listenOptions: SpeechListenOptions(localeId: 'es_ES'),
+      onResult: (r) {
+        if (r.finalResult) {
+          final parsed = VoiceParser.parseIngreso(r.recognizedWords);
+          setState(() {
+            _descCtrl.text = parsed.descripcion;
+            if (_categorias.contains(parsed.categoria)) {
+              _categoria = parsed.categoria;
+            }
+            if (parsed.monto != null) {
+              _montoCtrl.text = parsed.monto!.toStringAsFixed(0);
+            }
+            _escuchando = false;
+          });
+          _speech.stop();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(
+                    'Voz: "${r.recognizedWords}". Revisa y confirma.')));
+          }
+        }
+      },
+    );
   }
 
   Future<void> _elegirFecha() async {
@@ -65,6 +104,40 @@ class _IngresoFormScreenState extends State<IngresoFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            Card(
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF16A34A).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    _escuchando ? Icons.mic_rounded : Icons.mic_none_rounded,
+                    color: _escuchando
+                        ? Theme.of(context).colorScheme.error
+                        : const Color(0xFF16A34A),
+                  ),
+                ),
+                title: Text(
+                    _escuchando ? 'Escuchando...' : 'Dictar ingreso por voz',
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text(
+                    'Ej. "recibi ocho mil de mesada"'),
+                trailing: _escuchando
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      )
+                    : const Icon(Icons.chevron_right_rounded),
+                onTap: _escuchando
+                    ? () async => await _speech.stop().then((_) =>
+                        setState(() => _escuchando = false))
+                    : _escuchar,
+              ),
+            ),
+            const SizedBox(height: 12),
             MontoHeroField(
               controller: _montoCtrl,
               validator: (v) {

@@ -89,16 +89,40 @@ class VoiceParser {
     return total > 0 ? total : null;
   }
 
-  static VoiceResult parse(String frase) {
-    final categoria = detectarCategoria(frase);
+  static String detectarCategoriaIngreso(String texto) {
+    final t = _norm(texto);
+    if (t.contains('mesada')) return 'mesada';
+    if (t.contains('beca')) return 'beca';
+    if (t.contains('trabajo') ||
+        t.contains('sueldo') ||
+        t.contains('salario') ||
+        t.contains('empleo')) {
+      return 'trabajo';
+    }
+    if (t.contains('venta')) return 'ventas';
+    return 'otro';
+  }
+
+  static double? extraerMonto(String frase) {
     double? monto;
-    final digitos = RegExp(r'\d[\d.,]*').firstMatch(frase.replaceAll(' ', ''));
     final digitosEsp = RegExp(r'(\d[\d.,]*)').firstMatch(frase);
     if (digitosEsp != null) {
       monto = double.tryParse(digitosEsp.group(1)!.replaceAll(',', ''));
     }
-    digitos;
     monto ??= _palabrasANumero(frase);
+    return monto;
+  }
+
+  static VoiceResult parse(String frase) {
+    final categoria = detectarCategoria(frase);
+    final monto = extraerMonto(frase);
+    final desc = categoria[0].toUpperCase() + categoria.substring(1);
+    return VoiceResult(descripcion: desc, categoria: categoria, monto: monto);
+  }
+
+  static VoiceResult parseIngreso(String frase) {
+    final categoria = detectarCategoriaIngreso(frase);
+    final monto = extraerMonto(frase);
     final desc = categoria[0].toUpperCase() + categoria.substring(1);
     return VoiceResult(descripcion: desc, categoria: categoria, monto: monto);
   }
