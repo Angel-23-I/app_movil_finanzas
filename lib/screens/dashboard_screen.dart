@@ -8,6 +8,7 @@ import '../widgets/estado_banner.dart';
 import '../widgets/movimiento_tile.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/quick_actions.dart';
+import '../widgets/voice_entry_button.dart';
 import 'ingreso_form_screen.dart';
 import 'egreso_form_screen.dart';
 import 'ingresos_screen.dart';
@@ -92,6 +93,8 @@ class DashboardScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 12),
+                        const VoiceEntryButton(),
+                        const SizedBox(width: 8),
                         Stack(
                           children: [
                             Container(
